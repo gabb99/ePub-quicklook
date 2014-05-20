@@ -414,7 +414,8 @@
 				AB5685EF192B94D100F63E8D /* write.c */,
 				AB5685F0192B94D100F63E8D /* write.h */,
 			);
-			path = src;
+			name = src;
+			path = "../ePub-quicklook/libmobi/src";
 			sourceTree = "<group>";
 		};
 		D740FBDF15091EA7002D9C76 /* StressTests */ = {
@@ -1033,7 +1034,7 @@
 				INFOPLIST_FILE = "epubQL/epub-Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
 				PRODUCT_NAME = epub;
-				USER_HEADER_SEARCH_PATHS = "/usr/include/libxml2 $(SDKROOT)/usr/include/libxml2";
+				USER_HEADER_SEARCH_PATHS = "/usr/include/libxml2 $(SDKROOT)/usr/include/libxml2 $(SRCROOT)/libmobi/src";
 				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = qlgenerator;
 			};
@@ -1052,7 +1053,7 @@
 				INFOPLIST_FILE = "epubQL/epub-Info.plist";
 				INSTALL_PATH = /Library/QuickLook;
 				PRODUCT_NAME = epub;
-				USER_HEADER_SEARCH_PATHS = "/usr/include/libxml2 $(SDKROOT)/usr/include/libxml2";
+				USER_HEADER_SEARCH_PATHS = "/usr/include/libxml2 $(SDKROOT)/usr/include/libxml2 $(SRCROOT)/libmobi/src";
 				VALID_ARCHS = x86_64;
 				WRAPPER_EXTENSION = qlgenerator;
 			};
