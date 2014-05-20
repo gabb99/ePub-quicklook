@@ -67,29 +67,14 @@ static NSMutableDictionary *xmlns = nil;
         MOBIExthTag tag = mobi_get_exthtag_by_tag(curr->tag);
         switch (tag.tag)
         {
-            case 0:
-            {
-                /* unknown tag */
-                /* try to print the record both as string and numeric value */
-                char str[curr->size + 1];
-                unsigned i = 0;
-                unsigned char *p = curr->data;
-                while (isprint(*p) && i < curr->size)
-                {
-                    str[i] = (char)*p++;
-                    i++;
-                }
-                str[i] = '\0';
-                val32 = mobi_decode_exthvalue(curr->data, curr->size);
-                printf("Unknown (%i): %s (%u)\n", curr->tag, str, val32);
-            }
-            break;
-
             case EXTH_ISBN:
             case EXTH_RIGHTS:
             case EXTH_LANGUAGE:
             case EXTH_AUTHOR:
             case EXTH_UPDATEDTITLE:
+            case EXTH_PUBLISHER:
+            case EXTH_PUBLISHINGDATE:
+            case EXTH_KF8COVERURI:
             {
                 /* known tag */
                 unsigned i = 0;
@@ -102,8 +87,8 @@ static NSMutableDictionary *xmlns = nil;
                     case 0:
                         val32 = mobi_decode_exthvalue(data, size);
                         break;
-                        /* string */
 
+                        /* string */
                     case 1:
                         memcpy(str, data, size);
                         str[curr->size] = '\0';
@@ -114,10 +99,25 @@ static NSMutableDictionary *xmlns = nil;
                             case EXTH_LANGUAGE: language = [NSString stringWithUTF8String:str]; break;
                             case EXTH_AUTHOR: authors = [NSString stringWithUTF8String:str]; break;
                             case EXTH_UPDATEDTITLE: title = [NSString stringWithUTF8String:str]; break;
+                            case EXTH_PUBLISHER: publisher = [NSString stringWithUTF8String:str]; break;
+                            case EXTH_PUBLISHINGDATE: expiryDate = [NSDate dateFromOPFString:[NSString stringWithUTF8String:str]]; break;
+
+                            case EXTH_KF8COVERURI:
+                            {
+                                NSData *coverData;
+                                [coverData retain];
+                                
+                                //Extract and resize image
+                                cover = [[NSImage alloc] initWithData:coverData];
+                                [coverData release];
+                                
+                                haveCheckedForCover= YES;
+                            }
+                            break;
                         }
                         break;
+ 
                         /* binary */
-
                     case 2:
                         while (size--) {
                             uint8_t val8 = *data++;
