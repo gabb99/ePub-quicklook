@@ -11,18 +11,24 @@
 #include <AppKit/AppKit.h>
 #include "ZipArchive/ZipArchive.h"
 
+struct MOBIData;
+
 typedef enum {
     jtpUnknownBook = 0,
     jtpEPUB2,
     jtpEPUB3,
-    jtpiBooks
+    jtpiBooks,
+    jtpMobi
 } JTPbookType;
 
 @interface JTPepub : NSObject {
 @private
     ZipArchive *epubFile;
+    struct MOBIData *mobiFile;
+
     JTPbookType bookType;
     NSInteger epubVersion;
+
     NSMutableArray *manifest;
     NSMutableString *capturing;
     NSDictionary *entities;

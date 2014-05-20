@@ -54,6 +54,92 @@ static NSMutableDictionary *xmlns = nil;
     return self;
 }
 
+- (void)processMobi
+{
+    /* Linked list of MOBIExthHeader structures holds EXTH records */
+    const MOBIExthHeader *curr = mobiFile->eh;
+
+    while (curr != NULL)
+    {
+        uint32_t val32;
+
+        /* check if it is a known tag and get some more info if it is */
+        MOBIExthTag tag = mobi_get_exthtag_by_tag(curr->tag);
+        switch (tag.tag)
+        {
+            case 0:
+            {
+                /* unknown tag */
+                /* try to print the record both as string and numeric value */
+                char str[curr->size + 1];
+                unsigned i = 0;
+                unsigned char *p = curr->data;
+                while (isprint(*p) && i < curr->size)
+                {
+                    str[i] = (char)*p++;
+                    i++;
+                }
+                str[i] = '\0';
+                val32 = mobi_decode_exthvalue(curr->data, curr->size);
+                printf("Unknown (%i): %s (%u)\n", curr->tag, str, val32);
+            }
+            break;
+
+            case EXTH_ISBN:
+            case EXTH_RIGHTS:
+            case EXTH_LANGUAGE:
+            case EXTH_AUTHOR:
+            case EXTH_UPDATEDTITLE:
+            {
+                /* known tag */
+                unsigned i = 0;
+                size_t size = curr->size;
+                char str[2 * size + 1];
+                unsigned char *data = curr->data;
+                switch (tag.type)
+                {
+                        /* numeric */
+                    case 0:
+                        val32 = mobi_decode_exthvalue(data, size);
+                        break;
+                        /* string */
+
+                    case 1:
+                        memcpy(str, data, size);
+                        str[curr->size] = '\0';
+                        switch(tag.tag)
+                        {
+                            case EXTH_ISBN: ISBN = [NSString stringWithUTF8String:str]; break;
+                            case EXTH_RIGHTS: publisher = [NSString stringWithUTF8String:str]; break;
+                            case EXTH_LANGUAGE: language = [NSString stringWithUTF8String:str]; break;
+                            case EXTH_AUTHOR: authors = [NSString stringWithUTF8String:str]; break;
+                            case EXTH_UPDATEDTITLE: title = [NSString stringWithUTF8String:str]; break;
+                        }
+                        break;
+                        /* binary */
+
+                    case 2:
+                        while (size--) {
+                            uint8_t val8 = *data++;
+                            sprintf(&str[i], "%02x", val8);
+                            i += 2;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            break;
+
+            default:
+                break;
+        }
+
+        curr = curr->next;
+    }
+}
+
+
 /*
  Open the named file and read the opf file into an GDataXMLDocument.
  */
@@ -63,7 +149,29 @@ static NSMutableDictionary *xmlns = nil;
         return NO;
     }
     epubFile = [[ZipArchive alloc] initWithZipFile:(NSString*)fileName];
-    
+
+    if (epubFile == NULL)
+    {
+        mobiFile = mobi_init();
+        if (mobiFile)
+        {
+            if (mobi_load_filename(mobiFile, [fileName fileSystemRepresentation]) == MOBI_SUCCESS)
+            {
+                bookType = jtpMobi;
+                epubVersion = *mobiFile->mh->version;
+
+                char fullname[1024];
+                mobi_get_fullname(mobiFile, fullname, sizeof(fullname));
+                title = [NSString stringWithUTF8String:fullname];
+
+                [self processMobi];
+                return YES;
+            }
+        }
+
+        return NO;
+    }
+
     /*
      * Determine the type of books from the mimetype.
      */
@@ -743,6 +851,7 @@ resolveExternalEntityName:(NSString *)entityName
 - (void)dealloc
 {
     [epubFile release];
+    if (mobiFile != NULL) mobi_free(mobiFile);
     [manifest release];
     [capturing release];
     [entities release];
