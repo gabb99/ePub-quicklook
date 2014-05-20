@@ -9,6 +9,9 @@
 #import "JTPepub.h"
 #import "NSDate+OPF.h"
 
+/* include libmobi header */
+#include <mobi.h>
+
 @interface JTPepub (Private)
 @end
 
