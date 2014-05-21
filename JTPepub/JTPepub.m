@@ -11,6 +11,7 @@
 
 /* include libmobi header */
 #include "mobi.h"
+#include "util.h"
 
 @interface JTPepub (Private)
 @end
@@ -53,6 +54,76 @@ static NSMutableDictionary *xmlns = nil;
     }
     return self;
 }
+
+- (void)processMobiRaw
+{
+    const size_t maxlen = mobi_get_text_maxsize(mobiFile);
+    char *text = malloc(maxlen + 1);
+    if (text == NULL)
+    {
+        printf("Memory allocation failed\n");
+        return;
+    }
+
+    MOBI_RET mobi_ret;
+
+    if (mobi_is_encrypted(mobiFile))
+    {
+        uint16_t encryptionType = mobiFile->rh->encryption_type;
+        mobiFile->rh->encryption_type = RECORD0_NO_ENCRYPTION;
+
+        /* Extract text records, unpack, merge and copy it to text string */
+        mobi_ret = mobi_get_rawml(mobiFile, text, maxlen);
+        if (mobi_ret != MOBI_SUCCESS)
+        {
+            printf("Error parsing text (%i)\n", mobi_ret);
+            return;
+        }
+    }
+    
+    else
+    {
+        /* Extract text records, unpack, merge and copy it to text string */
+        mobi_ret = mobi_get_rawml(mobiFile, text, maxlen);
+        if (mobi_ret != MOBI_SUCCESS)
+        {
+            printf("Error parsing text (%i)\n", mobi_ret);
+            return;
+        }
+    }
+
+    /* Initialize MOBIRawml structure */
+    /* This structure will be filled with parsed records data */
+    MOBIRawml *rawml = mobi_init_rawml(mobiFile);
+    if (rawml == NULL)
+    {
+        printf("Memory allocation failed\n");
+        return;
+    }
+
+    /* Parse raw text and other data held in MOBIData structure into MOBIRawml structure */
+    mobi_ret = mobi_parse_rawml(rawml, mobiFile, text, maxlen);
+    free(text);
+    if (mobi_ret != MOBI_SUCCESS)
+    {
+        printf("Parsing rawml failed (%i)\n", mobi_ret);
+        mobi_free_rawml(rawml);
+        return;
+    }
+
+#if 0
+    /* Save parts to files */
+    int ret = dump_rawml_parts(rawml, fullpath);
+    if (ret != SUCCESS)
+    {
+        printf("Dumping parts failed\n");
+    }
+#endif
+
+    /* Free MOBIRawml structure */
+    mobi_free_rawml(rawml);
+}
+
 
 - (void)processMobi
 {
@@ -137,6 +208,8 @@ static NSMutableDictionary *xmlns = nil;
 
         curr = curr->next;
     }
+    
+    [self processMobiRaw];
 }
 
 
