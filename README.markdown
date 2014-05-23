@@ -4,7 +4,7 @@ The **epub.qlgenerator** plugin is designed to extract the cover images from EPU
 
 The **epub.mdimporter** plugin is designed to extract information from EPUB files (metadata as well as text content) and index it so that Spotlight can search it.
 
-These plugins read the various information directly from the EPUB contents - so will work on books that haven't been imported into iTunes.
+These plugins read the various information directly from the EPUB and Mobi contents - so will work on books that haven't been imported into iTunes.
 
 **Note**: When used on DRM protected files (Adobe, iBooks, Kobo, Barnes & Noble), metadata will only be read from the unencrypted part of the EPUB. Typically this means no cover image will be shown. Spotlight is also unable to index the text in DRM protected files, though it can still search the metadata in DRM protected files.
 
